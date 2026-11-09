@@ -1,0 +1,360 @@
+<!doctype html><html lang="is"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vallarforgjöf">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#eef3ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1712" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>html{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Vallarforgjöf</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+/* Layout: one screen, no scrolling — compact input row on top, result table split into two side-by-side columns that fill the rest */
+:root {
+  --bg: #eef3ef;
+  --card: #ffffff;
+  --ink: #12261c;
+  --muted: #5a6e63;
+  --line: #d3ded7;
+  --green: #1d5a3c;
+  --green-ink: #ffffff;
+  --flag: #f2c230;
+  --row-alt: #f2f6f3;
+  --err: #b3261e;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --rowh: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1712; --card: #15231b; --ink: #e4eee8; --muted: #93a89c; --line: #2a3d32;
+    --green: #3d9a6a; --green-ink: #06120b; --flag: #f2c230; --row-alt: #1a2b21; --err: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1712; --card: #15231b; --ink: #e4eee8; --muted: #93a89c; --line: #2a3d32;
+  --green: #3d9a6a; --green-ink: #06120b; --flag: #f2c230; --row-alt: #1a2b21; --err: #ff8a80;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.3;
+  overflow: hidden;
+}
+.wrap {
+  box-sizing: border-box;
+  height: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-block: 10px;
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+header { display: flex; align-items: center; gap: 8px; flex: none; }
+.flag { width: 20px; height: 24px; flex: none; }
+h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin: 0;
+}
+
+form {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.15fr);
+  gap: 6px;
+  align-items: end;
+}
+.field { display: grid; gap: 2px; min-width: 0; }
+label {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+input {
+  width: 100%;
+  box-sizing: border-box;
+  font: 600 1.3rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+}
+input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 25%, transparent); }
+input[aria-invalid="true"] { border-color: var(--err); }
+
+button {
+  font: 700 1.15rem/1 var(--display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--green-ink);
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 4px;
+  height: calc(1.3rem + 19px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button:active { transform: translateY(1px); filter: brightness(0.95); }
+button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
+
+.toggle {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  width: fit-content;
+  font-family: var(--body);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch {
+  position: relative;
+  width: 38px; height: 22px;
+  border-radius: 11px;
+  background: var(--line);
+  transition: background .15s;
+  flex: none;
+}
+.switch::after {
+  content: "";
+  position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+  transition: transform .15s;
+}
+.toggle input:checked + .switch { background: var(--green); }
+.toggle input:checked + .switch::after { transform: translateX(16px); }
+.toggle input:focus-visible + .switch { outline: 3px solid var(--flag); outline-offset: 2px; }
+
+.error { color: var(--err); margin: 0; font-size: 0.85rem; flex: none; }
+
+.result {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.col {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 0;
+  align-self: start;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  height: var(--rowh);
+  padding: 0 8px;
+  font-size: calc(var(--rowh) * 0.62);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.row:nth-child(odd):not(.head) { background: var(--row-alt); }
+.row.head {
+  background: var(--green);
+  color: var(--green-ink);
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: max(10px, calc(var(--rowh) * 0.55));
+}
+.range .dash { color: var(--muted); padding: 0 0.25em; }
+.ch {
+  text-align: right;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.2em;
+  padding-left: 6px;
+}
+.plus { color: var(--green); }
+
+.note { flex: none; color: var(--muted); font-size: 0.7rem; margin: 0; text-align: center; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .result.fresh .col { animation: fade .25s ease-out; }
+  @keyframes fade { from { opacity: .3 } to { opacity: 1 } }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <svg class="flag" viewBox="0 0 34 40" aria-hidden="true">
+      <rect x="6" y="3" width="2.5" height="34" rx="1" fill="var(--ink)"/>
+      <path d="M8.5 4 L30 10 L8.5 17 Z" fill="var(--flag)"/>
+      <ellipse cx="7.25" cy="37" rx="6" ry="2" fill="var(--green)"/>
+    </svg>
+    <h1>Vallarforgjöf</h1>
+  </header>
+
+  <form id="form" novalidate>
+    <div class="field">
+      <label for="cr">Course rating</label>
+      <input id="cr" inputmode="decimal" autocomplete="off" placeholder="70,1">
+    </div>
+    <div class="field">
+      <label for="sr">Slope</label>
+      <input id="sr" inputmode="numeric" autocomplete="off" placeholder="125">
+    </div>
+    <div class="field">
+      <label for="par">Par</label>
+      <input id="par" inputmode="numeric" autocomplete="off" placeholder="72">
+    </div>
+    <button type="submit" id="calc">Reikna</button>
+  </form>
+  <label class="toggle" for="part">
+    <input type="checkbox" id="part">
+    <span class="switch" aria-hidden="true"></span>
+    <span>Sýna bara vallarforgjöf 10–30</span>
+  </label>
+  <p class="error" id="error" hidden></p>
+
+  <section class="result" id="result" hidden>
+    <div class="col" id="col1"></div>
+    <div class="col" id="col2"></div>
+  </section>
+
+  <p class="note">WHS: grunnforgjöf × slope/113 + (CR − par), námundað</p>
+</div>
+
+<script>
+(() => {
+  const HI_MIN = -100;  // +10,0 in tenths
+  const HI_MAX = 540;   // 54,0 in tenths
+  const STORE = "vallarforgjof:last";
+  const PART_MIN = 10, PART_MAX = 30; // course handicaps shown when "Sýna bara" is on
+  const $ = id => document.getElementById(id);
+  let rowsPerCol = 0;
+
+  const parseNum = s => {
+    const t = String(s).trim().replace(",", ".");
+    return t === "" || isNaN(t) ? NaN : Number(t);
+  };
+
+  // Course handicap for a handicap index given in tenths. Integer math so .5 always rounds up.
+  function courseHandicap(hiTenths, crTenths, slope, par) {
+    const num = hiTenths * slope + (crTenths - par * 10) * 113; // value = num / 1130
+    return Math.floor((2 * num + 1130) / 2260);
+  }
+
+  function buildRanges(cr, slope, par) {
+    const crTenths = Math.round(cr * 10);
+    const rows = [];
+    for (let h = HI_MIN; h <= HI_MAX; h++) {
+      const ch = courseHandicap(h, crTenths, slope, par);
+      const last = rows[rows.length - 1];
+      if (last && last.ch === ch) last.to = h;
+      else rows.push({ from: h, to: h, ch });
+    }
+    return rows;
+  }
+
+  const fmtHI = t => {
+    const s = (Math.abs(t) / 10).toFixed(1).replace(".", ",");
+    return t < 0 ? "+" + s : s;
+  };
+  const fmtCH = n => n < 0 ? "+" + Math.abs(n) : String(n);
+
+  const head = `<div class="row head"><span>Grunnforgjöf</span><span>VF</span></div>`;
+  const rowHtml = r => `<div class="row">
+      <span class="range">${fmtHI(r.from)}<span class="dash">–</span>${fmtHI(r.to)}</span>
+      <span class="ch${r.ch < 0 ? " plus" : ""}">${fmtCH(r.ch)}</span>
+    </div>`;
+
+  // Size rows so both columns (header + rows) fill the space left on screen.
+  function fit() {
+    if (!rowsPerCol || $("result").hidden) return;
+    const h = $("result").clientHeight - 2; // borders
+    const rowh = Math.min(36, Math.max(11, Math.floor((h / (rowsPerCol + 1)) * 10) / 10));
+    document.documentElement.style.setProperty("--rowh", rowh + "px");
+  }
+
+  function showError(msg, el) {
+    $("error").textContent = msg;
+    $("error").hidden = false;
+    if (el) { el.setAttribute("aria-invalid", "true"); el.focus(); }
+  }
+
+  function calculate() {
+    ["cr", "sr", "par"].forEach(id => $(id).removeAttribute("aria-invalid"));
+    $("error").hidden = true;
+
+    const cr = parseNum($("cr").value);
+    const sr = parseNum($("sr").value);
+    const par = parseNum($("par").value);
+
+    if (!(cr >= 25 && cr <= 85)) return showError("Course rating þarf að vera tala, t.d. 70,1.", $("cr"));
+    if (!(Number.isInteger(sr) && sr >= 55 && sr <= 155)) return showError("Slope þarf að vera heil tala á bilinu 55–155.", $("sr"));
+    if (!(Number.isInteger(par) && par >= 27 && par <= 80)) return showError("Par þarf að vera heil tala, t.d. 72.", $("par"));
+
+    let rows = buildRanges(cr, sr, par);
+    if ($("part").checked) rows = rows.filter(r => r.ch >= PART_MIN && r.ch <= PART_MAX);
+    rowsPerCol = Math.ceil(rows.length / 2);
+    $("col1").innerHTML = head + rows.slice(0, rowsPerCol).map(rowHtml).join("");
+    $("col2").innerHTML = head + rows.slice(rowsPerCol).map(rowHtml).join("");
+
+    const res = $("result");
+    res.hidden = false;
+    res.classList.remove("fresh"); void res.offsetWidth; res.classList.add("fresh");
+    fit();
+
+    try { localStorage.setItem(STORE, JSON.stringify({ cr: $("cr").value, sr: $("sr").value, par: $("par").value, part: $("part").checked })); } catch (e) {}
+  }
+
+  $("form").addEventListener("submit", e => {
+    e.preventDefault();
+    document.activeElement && document.activeElement.blur();
+    calculate();
+  });
+  $("part").addEventListener("change", calculate);
+  window.addEventListener("resize", fit);
+  if (document.fonts) document.fonts.ready.then(fit);
+
+  // Start with the last values used, or an example tee so the table is filled in.
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE) || "null"); } catch (e) {}
+  const start = saved || { cr: "70,1", sr: "125", par: "72" };
+  $("cr").value = start.cr; $("sr").value = start.sr; $("par").value = start.par;
+  $("part").checked = !!start.part;
+  calculate();
+})();
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");</script>
+</html>
