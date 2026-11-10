@@ -246,7 +246,9 @@ form .primary { height: calc(1.3rem + 19px); padding: 0 14px; }
 .plus { color: var(--green); }
 
 .note { flex: none; color: var(--muted); font-size: 0.7rem; margin: 0; text-align: center; }
-header .toggle { font-size: 0.8rem; gap: 6px; white-space: nowrap; flex: none; }
+/* Same height as the "Mín forgjöf" input so the two header controls line up. */
+header .mine-hi { align-self: stretch; grid-template-rows: auto 1fr; }
+header .toggle { justify-content: center; }
 
 @media (prefers-reduced-motion: no-preference) {
   .result.fresh .col { animation: fade .25s ease-out; }
@@ -262,11 +264,13 @@ header .toggle { font-size: 0.8rem; gap: 6px; white-space: nowrap; flex: none; }
       <ellipse cx="7.25" cy="37" rx="6" ry="2" fill="var(--green)"/>
     </svg>
     <h1>Vallarforgjöf</h1>
-    <label class="toggle" for="part">
-      <input type="checkbox" id="part">
-      <span class="switch" aria-hidden="true"></span>
-      <span>Bara VF 10–30</span>
-    </label>
+    <div class="mine-hi">
+      <label for="part">Bara VF 10–30</label>
+      <label class="toggle">
+        <input type="checkbox" id="part">
+        <span class="switch" aria-hidden="true"></span>
+      </label>
+    </div>
     <div class="mine-hi">
       <label for="hi">Mín forgjöf</label>
       <input id="hi" inputmode="decimal" autocomplete="off" placeholder="—">
