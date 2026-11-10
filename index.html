@@ -227,7 +227,13 @@ header .toggle { justify-content: center; }
   text-transform: uppercase;
   font-size: max(10px, calc(var(--rowh) * 0.55));
 }
-.row.head .who { color: inherit; }
+/* Rows where one or more players land. */
+.row.has, .row.has:nth-child(odd) {
+  background: var(--flag);
+  color: var(--flag-ink);
+  font-weight: 600;
+}
+.row.has .dash, .row.has .plus, .row.has .who, .row.head .who { color: inherit; }
 .range .dash { color: var(--muted); padding: 0 0.25em; }
 .who {
   overflow: hidden;
@@ -634,7 +640,7 @@ header .toggle { justify-content: center; }
   const head = names => `<div class="row head"><span>Grunnforgjöf</span><span class="who">${names ? "Leikmenn" : ""}</span><span>VF</span></div>`;
   const rowHtml = (r, group) => {
     const who = group.filter(p => p.hi >= r.from && p.hi <= r.to).map(p => escapeHtml(p.name)).join(", ");
-    return `<div class="row">
+    return `<div class="row${who ? " has" : ""}">
       <span class="range">${fmtHI(r.from)}<span class="dash">–</span>${fmtHI(r.to)}</span>
       <span class="who">${who}</span>
       <span class="ch${r.ch < 0 ? " plus" : ""}">${fmtCH(r.ch)}</span>
