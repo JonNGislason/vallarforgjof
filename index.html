@@ -146,7 +146,69 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 .ghost.armed { color: #fff; background: var(--err); border-color: var(--err); font-size: 0.8rem; }
 
 .tees { flex: none; display: flex; gap: 6px; }
-.tees select { flex: 1; }
+.picker { flex: 1; min-width: 0; position: relative; }
+.pick-btn {
+  width: 100%;
+  height: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 10px;
+  color: var(--ink);
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: left;
+}
+.pick-btn[aria-expanded="true"] { border-color: var(--green); }
+.pick-btn svg { width: 18px; height: 18px; flex: none; color: var(--muted); }
+.pick-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 1.1rem;
+}
+.pick-label b, .pick-list b { font-weight: 700; }
+.pick-sub { color: var(--muted); font-family: var(--body); font-weight: 500; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; }
+.pick-ph { color: var(--muted); font-weight: 600; }
+.pick-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1.5px solid var(--green);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.pick-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pick-list li + li { border-top: 1px solid var(--line); }
+.pick-list li:hover { background: var(--row-alt); }
+.pick-list li[aria-selected="true"] { background: var(--green); color: var(--green-ink); }
+.pick-list li[aria-selected="true"] .pick-sub { color: inherit; }
 
 form {
   flex: none;
@@ -315,7 +377,13 @@ header .toggle { justify-content: center; }
     </header>
 
     <div class="tees">
-      <select id="tees" aria-label="Vistaðir teigar"></select>
+      <div class="picker" id="picker">
+        <button type="button" class="pick-btn" id="pickBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Vistaðir teigar">
+          <span class="pick-label" id="pickLabel"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="pick-list" id="pickList" role="listbox" hidden></ul>
+      </div>
       <button type="button" class="ghost" id="new">Nýr</button>
       <button type="button" class="ghost icon" id="del" aria-label="Eyða teig"></button>
       <button type="button" class="ghost icon" id="openPlayers" aria-label="Leikmenn"></button>
@@ -481,18 +549,44 @@ header .toggle { justify-content: center; }
   let tees = load(TEES, []);
   if (!Array.isArray(tees)) tees = [];
 
+  let current = ""; // name of the selected saved tee, "" when none
+
+  const teeDetails = t => `${fmtCR(t.cr)} / ${t.sr} / ${t.par}`;
+
   function renderTees(selected) {
-    const sel = $("tees");
     tees.sort((a, b) => a.name.localeCompare(b.name, "is"));
-    sel.innerHTML = tees.length
-      ? `<option value="">Veldu völl / teig…</option>` +
-        tees.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}  ·  ${fmtCR(t.cr)} / ${t.sr} / ${t.par}</option>`).join("")
-      : `<option value="">Engir vistaðir teigar enn</option>`;
-    sel.disabled = !tees.length;
-    sel.value = selected && tees.some(t => t.name === selected) ? selected : "";
+    current = selected && tees.some(t => t.name === selected) ? selected : "";
+    const t = tees.find(x => x.name === current);
+    $("pickLabel").innerHTML = t
+      ? `<b>${escapeHtml(t.name)}</b><span class="pick-sub">${teeDetails(t)}</span>`
+      : `<span class="pick-ph">${tees.length ? "Veldu völl / teig…" : "Engir vistaðir teigar enn"}</span>`;
+    $("pickBtn").disabled = !tees.length;
+    $("pickList").innerHTML = tees.map(x =>
+      `<li role="option" tabindex="-1" data-name="${escapeHtml(x.name)}" aria-selected="${x.name === current}">
+         <b>${escapeHtml(x.name)}</b><span class="pick-sub">${teeDetails(x)}</span>
+       </li>`).join("");
     disarmTee();
-    $("del").disabled = !sel.value;
+    $("del").disabled = !current;
   }
+
+  // Inline drop-down: the list opens right under the button instead of the phone's own picker.
+  function openPicker(open) {
+    $("pickList").hidden = !open;
+    $("pickBtn").setAttribute("aria-expanded", open);
+    if (open) {
+      const sel = $("pickList").querySelector('[aria-selected="true"]') || $("pickList").firstElementChild;
+      sel && sel.scrollIntoView({ block: "nearest" });
+    }
+  }
+  $("pickBtn").addEventListener("click", () => openPicker($("pickList").hidden));
+  document.addEventListener("click", e => { if (!e.target.closest("#picker")) openPicker(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") openPicker(false); });
+  $("pickList").addEventListener("click", e => {
+    const li = e.target.closest("li");
+    if (!li) return;
+    openPicker(false);
+    selectTee(li.dataset.name);
+  });
 
   function upsertTee(name, cr, sr, par) {
     const existing = tees.find(t => t.name === name);
@@ -505,30 +599,28 @@ header .toggle { justify-content: center; }
     return "Vistað";
   }
 
-  $("tees").addEventListener("change", () => {
-    const t = tees.find(x => x.name === $("tees").value);
-    disarmTee();
-    $("del").disabled = !t;
+  function selectTee(name) {
+    const t = tees.find(x => x.name === name);
     if (!t) return;
+    renderTees(name);
     $("name").value = t.name;
     $("cr").value = fmtCR(t.cr);
     $("sr").value = t.sr;
     $("par").value = t.par;
     render();
     rememberLast();
-  });
+  }
 
   $("new").addEventListener("click", () => {
-    $("tees").value = "";
-    $("del").disabled = true;
-    disarmTee();
+    openPicker(false);
+    renderTees("");
     ["name", "cr", "sr", "par"].forEach(id => { $(id).value = ""; $(id).removeAttribute("aria-invalid"); });
     showMsg("Sláðu inn teig með M eða K aftast, CR, slope og par og ýttu á Reikna.");
     $("name").focus();
   });
 
   const disarmTee = armable($("del"), () => {
-    const name = $("tees").value;
+    const name = current;
     if (!name) return;
     tees = tees.filter(t => t.name !== name);
     save(TEES, tees);
