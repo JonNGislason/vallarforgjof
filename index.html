@@ -78,9 +78,7 @@ h1 {
   flex: 1;
   min-width: 0;
 }
-.mine-hi { display: grid; gap: 2px; flex: none; }
-.mine-hi input { width: 4.2em; padding: 6px 4px; font-size: 1.15rem; }
-header .mine-hi { align-self: stretch; grid-template-rows: auto 1fr; }
+.head-ctl { display: grid; gap: 2px; flex: none; justify-items: center; }
 
 label, .lbl {
   font-family: var(--display);
@@ -229,12 +227,7 @@ header .toggle { justify-content: center; }
   text-transform: uppercase;
   font-size: max(10px, calc(var(--rowh) * 0.55));
 }
-.row.mine, .row.mine:nth-child(odd) {
-  background: var(--flag);
-  color: var(--flag-ink);
-  font-weight: 600;
-}
-.row.mine .dash, .row.mine .plus, .row.mine .who, .row.head .who { color: inherit; }
+.row.head .who { color: inherit; }
 .range .dash { color: var(--muted); padding: 0 0.25em; }
 .who {
   overflow: hidden;
@@ -306,16 +299,12 @@ header .toggle { justify-content: center; }
         <ellipse cx="7.25" cy="37" rx="6" ry="2" fill="var(--green)"/>
       </svg>
       <h1>Vallarforgjöf</h1>
-      <div class="mine-hi">
+      <div class="head-ctl">
         <label for="part">Bara VF 10–30</label>
         <label class="toggle">
           <input type="checkbox" id="part">
           <span class="switch" aria-hidden="true"></span>
         </label>
-      </div>
-      <div class="mine-hi">
-        <label for="hi">Mín forgjöf</label>
-        <input id="hi" inputmode="decimal" autocomplete="off" placeholder="—">
       </div>
     </header>
 
@@ -382,7 +371,6 @@ header .toggle { justify-content: center; }
   const PART_MIN = 10, PART_MAX = 30; // course handicaps shown when "Bara VF 10–30" is on
   const STORE = "vallarforgjof:last";
   const TEES = "vallarforgjof:tees";
-  const MY_HI = "vallarforgjof:hi";
   const PLAYERS = "vallarforgjof:players";
   const $ = id => document.getElementById(id);
   let rowsPerCol = 0;
@@ -542,16 +530,6 @@ header .toggle { justify-content: center; }
     showMsg(`${name} eytt.`);
   });
 
-  /* ---------- my handicap ---------- */
-
-  $("hi").value = load(MY_HI, "");
-  $("hi").addEventListener("input", () => {
-    const v = parseHI($("hi").value);
-    $("hi").toggleAttribute("aria-invalid", Number.isNaN(v));
-    save(MY_HI, $("hi").value.trim());
-    render(true);
-  });
-
   /* ---------- players ---------- */
 
   let players = load(PLAYERS, []);
@@ -654,9 +632,9 @@ header .toggle { justify-content: center; }
   /* ---------- table ---------- */
 
   const head = names => `<div class="row head"><span>Grunnforgjöf</span><span class="who">${names ? "Leikmenn" : ""}</span><span>VF</span></div>`;
-  const rowHtml = (r, my, group) => {
+  const rowHtml = (r, group) => {
     const who = group.filter(p => p.hi >= r.from && p.hi <= r.to).map(p => escapeHtml(p.name)).join(", ");
-    return `<div class="row${my !== null && my >= r.from && my <= r.to ? " mine" : ""}">
+    return `<div class="row">
       <span class="range">${fmtHI(r.from)}<span class="dash">–</span>${fmtHI(r.to)}</span>
       <span class="who">${who}</span>
       <span class="ch${r.ch < 0 ? " plus" : ""}">${fmtCH(r.ch)}</span>
@@ -690,15 +668,13 @@ header .toggle { justify-content: center; }
     const single = $("part").checked;
     let rows = buildRanges(v.cr, v.sr, v.par);
     if (single) rows = rows.filter(r => r.ch >= PART_MIN && r.ch <= PART_MAX);
-    const my = parseHI($("hi").value);
-    const mine = validHI(my) ? my : null;
     const group = activePlayers(teeSex($("name").value));
 
     $("result").classList.toggle("single", single);
     $("col2").hidden = single;
     rowsPerCol = single ? rows.length : Math.ceil(rows.length / 2);
-    $("col1").innerHTML = head(group.length) + rows.slice(0, rowsPerCol).map(r => rowHtml(r, mine, group)).join("");
-    $("col2").innerHTML = single ? "" : head(group.length) + rows.slice(rowsPerCol).map(r => rowHtml(r, mine, group)).join("");
+    $("col1").innerHTML = head(group.length) + rows.slice(0, rowsPerCol).map(r => rowHtml(r, group)).join("");
+    $("col2").innerHTML = single ? "" : head(group.length) + rows.slice(rowsPerCol).map(r => rowHtml(r, group)).join("");
 
     const res = $("result");
     res.hidden = false;
