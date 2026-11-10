@@ -70,12 +70,13 @@ header { display: flex; align-items: center; gap: 8px; flex: none; }
 h1 {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   line-height: 1;
   margin: 0;
   flex: 1;
+  min-width: 0;
 }
-.mine-hi { display: flex; align-items: center; gap: 6px; }
+.mine-hi { display: grid; gap: 2px; flex: none; }
 .mine-hi input { width: 4.2em; padding: 6px 4px; font-size: 1.15rem; }
 
 label, .lbl {
@@ -153,7 +154,6 @@ form {
 }
 .field { display: grid; gap: 2px; min-width: 0; }
 form .primary { height: calc(1.3rem + 19px); padding: 0 14px; }
-.bottom { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 .toggle {
   display: flex;
@@ -245,7 +245,8 @@ form .primary { height: calc(1.3rem + 19px); padding: 0 14px; }
 }
 .plus { color: var(--green); }
 
-.note { color: var(--muted); font-size: 0.7rem; margin: 0; text-align: right; }
+.note { flex: none; color: var(--muted); font-size: 0.7rem; margin: 0; text-align: center; }
+header .toggle { font-size: 0.8rem; gap: 6px; white-space: nowrap; flex: none; }
 
 @media (prefers-reduced-motion: no-preference) {
   .result.fresh .col { animation: fade .25s ease-out; }
@@ -261,6 +262,11 @@ form .primary { height: calc(1.3rem + 19px); padding: 0 14px; }
       <ellipse cx="7.25" cy="37" rx="6" ry="2" fill="var(--green)"/>
     </svg>
     <h1>Vallarforgjöf</h1>
+    <label class="toggle" for="part">
+      <input type="checkbox" id="part">
+      <span class="switch" aria-hidden="true"></span>
+      <span>Bara VF 10–30</span>
+    </label>
     <div class="mine-hi">
       <label for="hi">Mín forgjöf</label>
       <input id="hi" inputmode="decimal" autocomplete="off" placeholder="—">
@@ -299,14 +305,7 @@ form .primary { height: calc(1.3rem + 19px); padding: 0 14px; }
     <div class="col" id="col2"></div>
   </section>
 
-  <div class="bottom">
-    <label class="toggle" for="part">
-      <input type="checkbox" id="part">
-      <span class="switch" aria-hidden="true"></span>
-      <span>Bara VF 10–30</span>
-    </label>
-    <p class="note">WHS: HI × slope/113 + (CR − par)</p>
-  </div>
+  <p class="note">WHS: grunnforgjöf × slope/113 + (CR − par), námundað</p>
 </div>
 
 <script>
