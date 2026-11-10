@@ -13,7 +13,7 @@
 <title>Vallarforgjöf</title>
 <link rel="stylesheet" href="fonts.css">
 <style>
-/* Layout: one screen, no scrolling — compact input row on top, result table split into two side-by-side columns that fill the rest */
+/* Layout: one screen, no scrolling — saved-tee picker and inputs on top, result table split into two side-by-side columns that fill the rest */
 :root {
   --bg: #eef3ef;
   --card: #ffffff;
@@ -23,6 +23,7 @@
   --green: #1d5a3c;
   --green-ink: #ffffff;
   --flag: #f2c230;
+  --flag-ink: #1b1600;
   --row-alt: #f2f6f3;
   --err: #b3261e;
   --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
@@ -32,13 +33,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0d1712; --card: #15231b; --ink: #e4eee8; --muted: #93a89c; --line: #2a3d32;
-    --green: #3d9a6a; --green-ink: #06120b; --flag: #f2c230; --row-alt: #1a2b21; --err: #ff8a80;
+    --green: #3d9a6a; --green-ink: #06120b; --flag: #f2c230; --flag-ink: #1b1600; --row-alt: #1a2b21; --err: #ff8a80;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0d1712; --card: #15231b; --ink: #e4eee8; --muted: #93a89c; --line: #2a3d32;
-  --green: #3d9a6a; --green-ink: #06120b; --flag: #f2c230; --row-alt: #1a2b21; --err: #ff8a80;
+  --green: #3d9a6a; --green-ink: #06120b; --flag: #f2c230; --flag-ink: #1b1600; --row-alt: #1a2b21; --err: #ff8a80;
   color-scheme: dark;
 }
 
@@ -72,17 +73,12 @@ h1 {
   font-size: 1.5rem;
   line-height: 1;
   margin: 0;
+  flex: 1;
 }
+.mine-hi { display: flex; align-items: center; gap: 6px; }
+.mine-hi input { width: 4.2em; padding: 6px 4px; font-size: 1.15rem; }
 
-form {
-  flex: none;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.15fr);
-  gap: 6px;
-  align-items: end;
-}
-.field { display: grid; gap: 2px; min-width: 0; }
-label {
+label, .lbl {
   font-family: var(--display);
   font-weight: 600;
   font-size: 0.72rem;
@@ -91,52 +87,88 @@ label {
   color: var(--muted);
   white-space: nowrap;
 }
-input {
+
+input, select {
   width: 100%;
   box-sizing: border-box;
-  font: 600 1.3rem/1 var(--display);
-  font-variant-numeric: tabular-nums;
   color: var(--ink);
   background: var(--card);
   border: 1.5px solid var(--line);
   border-radius: 8px;
+}
+input {
+  font: 600 1.3rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
   padding: 8px 4px;
   text-align: center;
 }
-input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 25%, transparent); }
+input.name { text-align: left; padding-left: 10px; letter-spacing: 0.02em; }
+input::placeholder { color: var(--muted); opacity: 0.6; }
+select {
+  font: 600 1.1rem/1.2 var(--display);
+  padding: 7px 8px;
+  min-width: 0;
+}
+input:focus, select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 25%, transparent); }
 input[aria-invalid="true"] { border-color: var(--err); }
 
 button {
-  font: 700 1.15rem/1 var(--display);
+  font-family: var(--display);
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--green-ink);
-  background: var(--green);
-  border: 0;
   border-radius: 8px;
-  padding: 10px 4px;
-  height: calc(1.3rem + 19px);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 button:active { transform: translateY(1px); filter: brightness(0.95); }
 button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
+button:disabled { opacity: 0.4; cursor: default; transform: none; }
+.primary {
+  font-size: 1.15rem;
+  color: var(--green-ink);
+  background: var(--green);
+  border: 0;
+  padding: 10px 22px;
+}
+.ghost {
+  flex: none;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  padding: 0 12px;
+}
+.ghost.armed { color: #fff; background: var(--err); border-color: var(--err); }
+
+.tees { flex: none; display: flex; gap: 6px; }
+.tees select { flex: 1; }
+
+form {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 1fr)) auto;
+  gap: 6px;
+  align-items: end;
+}
+.field { display: grid; gap: 2px; min-width: 0; }
+form .primary { height: calc(1.3rem + 19px); padding: 0 14px; }
+.bottom { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 .toggle {
-  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  width: fit-content;
   font-family: var(--body);
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
   color: var(--ink);
+  white-space: normal;
 }
 .toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .switch {
@@ -159,7 +191,8 @@ button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
 .toggle input:checked + .switch::after { transform: translateX(16px); }
 .toggle input:focus-visible + .switch { outline: 3px solid var(--flag); outline-offset: 2px; }
 
-.error { color: var(--err); margin: 0; font-size: 0.85rem; flex: none; }
+.msg { margin: 0; font-size: 0.85rem; flex: none; color: var(--muted); }
+.msg.error { color: var(--err); }
 
 .result {
   flex: 1;
@@ -196,6 +229,12 @@ button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
   text-transform: uppercase;
   font-size: max(10px, calc(var(--rowh) * 0.55));
 }
+.row.mine, .row.mine:nth-child(odd) {
+  background: var(--flag);
+  color: var(--flag-ink);
+  font-weight: 600;
+}
+.row.mine .dash, .row.mine .plus { color: inherit; }
 .range .dash { color: var(--muted); padding: 0 0.25em; }
 .ch {
   text-align: right;
@@ -206,7 +245,7 @@ button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
 }
 .plus { color: var(--green); }
 
-.note { flex: none; color: var(--muted); font-size: 0.7rem; margin: 0; text-align: center; }
+.note { color: var(--muted); font-size: 0.7rem; margin: 0; text-align: right; }
 
 @media (prefers-reduced-motion: no-preference) {
   .result.fresh .col { animation: fade .25s ease-out; }
@@ -222,11 +261,25 @@ button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
       <ellipse cx="7.25" cy="37" rx="6" ry="2" fill="var(--green)"/>
     </svg>
     <h1>Vallarforgjöf</h1>
+    <div class="mine-hi">
+      <label for="hi">Mín forgjöf</label>
+      <input id="hi" inputmode="decimal" autocomplete="off" placeholder="—">
+    </div>
   </header>
+
+  <div class="tees">
+    <select id="tees" aria-label="Vistaðir teigar"></select>
+    <button type="button" class="ghost" id="new">Nýr</button>
+    <button type="button" class="ghost" id="del">Eyða</button>
+  </div>
 
   <form id="form" novalidate>
     <div class="field">
-      <label for="cr">Course rating</label>
+      <label for="name">Teigur</label>
+      <input id="name" class="name" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GK 47 M">
+    </div>
+    <div class="field">
+      <label for="cr">CR</label>
       <input id="cr" inputmode="decimal" autocomplete="off" placeholder="70,1">
     </div>
     <div class="field">
@@ -237,36 +290,58 @@ button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
       <label for="par">Par</label>
       <input id="par" inputmode="numeric" autocomplete="off" placeholder="72">
     </div>
-    <button type="submit" id="calc">Reikna</button>
+    <button type="submit" class="primary" id="calc">Reikna</button>
   </form>
-  <label class="toggle" for="part">
-    <input type="checkbox" id="part">
-    <span class="switch" aria-hidden="true"></span>
-    <span>Sýna bara vallarforgjöf 10–30</span>
-  </label>
-  <p class="error" id="error" hidden></p>
+  <p class="msg" id="msg" hidden></p>
 
   <section class="result" id="result" hidden>
     <div class="col" id="col1"></div>
     <div class="col" id="col2"></div>
   </section>
 
-  <p class="note">WHS: grunnforgjöf × slope/113 + (CR − par), námundað</p>
+  <div class="bottom">
+    <label class="toggle" for="part">
+      <input type="checkbox" id="part">
+      <span class="switch" aria-hidden="true"></span>
+      <span>Bara VF 10–30</span>
+    </label>
+    <p class="note">WHS: HI × slope/113 + (CR − par)</p>
+  </div>
 </div>
 
 <script>
 (() => {
-  const HI_MIN = -100;  // +10,0 in tenths
+  const HI_MIN = -50;   // +5,0 in tenths
   const HI_MAX = 540;   // 54,0 in tenths
+  const PART_MIN = 10, PART_MAX = 30; // course handicaps shown when "Bara VF 10–30" is on
   const STORE = "vallarforgjof:last";
-  const PART_MIN = 10, PART_MAX = 30; // course handicaps shown when "Sýna bara" is on
+  const TEES = "vallarforgjof:tees";
+  const MY_HI = "vallarforgjof:hi";
   const $ = id => document.getElementById(id);
   let rowsPerCol = 0;
+  let msgTimer = 0, delTimer = 0;
+
+  const load = (key, fallback) => {
+    try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch (e) { return fallback; }
+  };
+  const save = (key, value) => {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+  };
 
   const parseNum = s => {
     const t = String(s).trim().replace(",", ".");
     return t === "" || isNaN(t) ? NaN : Number(t);
   };
+  // "+2,3" is a plus handicap, stored as -23 tenths.
+  const parseHI = s => {
+    const t = String(s).trim();
+    if (t === "") return null;
+    const n = parseNum(t.replace(/^\+/, ""));
+    if (isNaN(n)) return NaN;
+    const tenths = Math.round(n * 10) * (t.startsWith("+") ? -1 : 1);
+    return tenths >= HI_MIN && tenths <= HI_MAX ? tenths : NaN;
+  };
+  const cleanName = s => String(s).trim().replace(/\s+/g, " ").toUpperCase();
 
   // Course handicap for a handicap index given in tenths. Integer math so .5 always rounds up.
   function courseHandicap(hiTenths, crTenths, slope, par) {
@@ -291,9 +366,98 @@ button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
     return t < 0 ? "+" + s : s;
   };
   const fmtCH = n => n < 0 ? "+" + Math.abs(n) : String(n);
+  const fmtCR = n => n.toFixed(1).replace(".", ",");
+
+  /* ---------- saved tees ---------- */
+
+  let tees = load(TEES, []);
+  if (!Array.isArray(tees)) tees = [];
+
+  function renderTees(selected) {
+    const sel = $("tees");
+    tees.sort((a, b) => a.name.localeCompare(b.name, "is"));
+    sel.innerHTML = tees.length
+      ? `<option value="">Veldu völl / teig…</option>` +
+        tees.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}  ·  ${fmtCR(t.cr)} / ${t.sr} / ${t.par}</option>`).join("")
+      : `<option value="">Engir vistaðir teigar enn</option>`;
+    sel.disabled = !tees.length;
+    sel.value = selected && tees.some(t => t.name === selected) ? selected : "";
+    disarmDelete();
+    $("del").disabled = !sel.value;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  }
+
+  function upsertTee(name, cr, sr, par) {
+    const existing = tees.find(t => t.name === name);
+    if (existing) {
+      const changed = existing.cr !== cr || existing.sr !== sr || existing.par !== par;
+      Object.assign(existing, { cr, sr, par });
+      return changed ? "Uppfært" : null;
+    }
+    tees.push({ name, cr, sr, par });
+    return "Vistað";
+  }
+
+  $("tees").addEventListener("change", () => {
+    const t = tees.find(x => x.name === $("tees").value);
+    disarmDelete();
+    $("del").disabled = !t;
+    if (!t) return;
+    $("name").value = t.name;
+    $("cr").value = fmtCR(t.cr);
+    $("sr").value = t.sr;
+    $("par").value = t.par;
+    render();
+    rememberLast();
+  });
+
+  $("new").addEventListener("click", () => {
+    $("tees").value = "";
+    $("del").disabled = true;
+    disarmDelete();
+    ["name", "cr", "sr", "par"].forEach(id => { $(id).value = ""; $(id).removeAttribute("aria-invalid"); });
+    showMsg("Sláðu inn nafn, CR, slope og par og ýttu á Reikna til að vista.");
+    $("name").focus();
+  });
+
+  // Two taps to delete: the first arms the button, the second deletes.
+  function disarmDelete() {
+    clearTimeout(delTimer);
+    $("del").classList.remove("armed");
+    $("del").textContent = "Eyða";
+  }
+  $("del").addEventListener("click", () => {
+    const name = $("tees").value;
+    if (!name) return;
+    if (!$("del").classList.contains("armed")) {
+      $("del").classList.add("armed");
+      $("del").textContent = "Viss?";
+      delTimer = setTimeout(disarmDelete, 3000);
+      return;
+    }
+    tees = tees.filter(t => t.name !== name);
+    save(TEES, tees);
+    renderTees("");
+    showMsg(`${name} eytt.`);
+  });
+
+  /* ---------- my handicap ---------- */
+
+  $("hi").value = load(MY_HI, "");
+  $("hi").addEventListener("input", () => {
+    const v = parseHI($("hi").value);
+    $("hi").toggleAttribute("aria-invalid", Number.isNaN(v));
+    save(MY_HI, $("hi").value.trim());
+    render(true);
+  });
+
+  /* ---------- table ---------- */
 
   const head = `<div class="row head"><span>Grunnforgjöf</span><span>VF</span></div>`;
-  const rowHtml = r => `<div class="row">
+  const rowHtml = (r, my) => `<div class="row${my !== null && my >= r.from && my <= r.to ? " mine" : ""}">
       <span class="range">${fmtHI(r.from)}<span class="dash">–</span>${fmtHI(r.to)}</span>
       <span class="ch${r.ch < 0 ? " plus" : ""}">${fmtCH(r.ch)}</span>
     </div>`;
@@ -306,54 +470,84 @@ button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
     document.documentElement.style.setProperty("--rowh", rowh + "px");
   }
 
+  function showMsg(text, isError) {
+    clearTimeout(msgTimer);
+    $("msg").textContent = text;
+    $("msg").classList.toggle("error", !!isError);
+    $("msg").hidden = false;
+    fit();
+    if (!isError) msgTimer = setTimeout(() => { $("msg").hidden = true; fit(); }, 3500);
+  }
   function showError(msg, el) {
-    $("error").textContent = msg;
-    $("error").hidden = false;
+    showMsg(msg, true);
     if (el) { el.setAttribute("aria-invalid", "true"); el.focus(); }
+    return null;
   }
 
-  function calculate() {
+  function readInputs(quiet) {
     ["cr", "sr", "par"].forEach(id => $(id).removeAttribute("aria-invalid"));
-    $("error").hidden = true;
-
     const cr = parseNum($("cr").value);
     const sr = parseNum($("sr").value);
     const par = parseNum($("par").value);
+    if (!(cr >= 25 && cr <= 85)) return quiet ? null : showError("CR þarf að vera tala, t.d. 70,1.", $("cr"));
+    if (!(Number.isInteger(sr) && sr >= 55 && sr <= 155)) return quiet ? null : showError("Slope þarf að vera heil tala á bilinu 55–155.", $("sr"));
+    if (!(Number.isInteger(par) && par >= 27 && par <= 80)) return quiet ? null : showError("Par þarf að vera heil tala, t.d. 72.", $("par"));
+    return { cr: Math.round(cr * 10) / 10, sr, par };
+  }
 
-    if (!(cr >= 25 && cr <= 85)) return showError("Course rating þarf að vera tala, t.d. 70,1.", $("cr"));
-    if (!(Number.isInteger(sr) && sr >= 55 && sr <= 155)) return showError("Slope þarf að vera heil tala á bilinu 55–155.", $("sr"));
-    if (!(Number.isInteger(par) && par >= 27 && par <= 80)) return showError("Par þarf að vera heil tala, t.d. 72.", $("par"));
+  // Draws the table from the current inputs. Quiet = don't complain about empty fields.
+  function render(quiet) {
+    const v = readInputs(quiet);
+    if (!v) return false;
 
-    let rows = buildRanges(cr, sr, par);
+    let rows = buildRanges(v.cr, v.sr, v.par);
     if ($("part").checked) rows = rows.filter(r => r.ch >= PART_MIN && r.ch <= PART_MAX);
+    const my = parseHI($("hi").value);
+    const mine = typeof my === "number" && !Number.isNaN(my) ? my : null;
+
     rowsPerCol = Math.ceil(rows.length / 2);
-    $("col1").innerHTML = head + rows.slice(0, rowsPerCol).map(rowHtml).join("");
-    $("col2").innerHTML = head + rows.slice(rowsPerCol).map(rowHtml).join("");
+    $("col1").innerHTML = head + rows.slice(0, rowsPerCol).map(r => rowHtml(r, mine)).join("");
+    $("col2").innerHTML = head + rows.slice(rowsPerCol).map(r => rowHtml(r, mine)).join("");
 
     const res = $("result");
     res.hidden = false;
     res.classList.remove("fresh"); void res.offsetWidth; res.classList.add("fresh");
     fit();
+    return v;
+  }
 
-    try { localStorage.setItem(STORE, JSON.stringify({ cr: $("cr").value, sr: $("sr").value, par: $("par").value, part: $("part").checked })); } catch (e) {}
+  function rememberLast() {
+    save(STORE, { name: $("name").value, cr: $("cr").value, sr: $("sr").value, par: $("par").value, part: $("part").checked });
   }
 
   $("form").addEventListener("submit", e => {
     e.preventDefault();
     document.activeElement && document.activeElement.blur();
-    calculate();
+    $("msg").hidden = true;
+    const v = render(false);
+    if (!v) return;
+
+    const name = cleanName($("name").value);
+    $("name").value = name;
+    if (name) {
+      const result = upsertTee(name, v.cr, v.sr, v.par);
+      if (!save(TEES, tees)) showMsg("Ekki tókst að vista í þessum vafra.", true);
+      else if (result) showMsg(`${result}: ${name}`);
+      renderTees(name);
+    }
+    rememberLast();
   });
-  $("part").addEventListener("change", calculate);
+  $("part").addEventListener("change", () => { render(true); rememberLast(); });
   window.addEventListener("resize", fit);
   if (document.fonts) document.fonts.ready.then(fit);
 
   // Start with the last values used, or an example tee so the table is filled in.
-  let saved = null;
-  try { saved = JSON.parse(localStorage.getItem(STORE) || "null"); } catch (e) {}
-  const start = saved || { cr: "70,1", sr: "125", par: "72" };
+  const start = load(STORE, null) || { name: "", cr: "70,1", sr: "125", par: "72" };
+  $("name").value = start.name || "";
   $("cr").value = start.cr; $("sr").value = start.sr; $("par").value = start.par;
   $("part").checked = !!start.part;
-  calculate();
+  renderTees(cleanName(start.name || ""));
+  render(true);
 })();
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");</script>
