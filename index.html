@@ -392,15 +392,15 @@ header .toggle { justify-content: center; }
     <form id="form" novalidate>
       <div class="field">
         <label for="name">Teigur + M/K</label>
-        <input id="name" class="name" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GK 47 M">
+        <input id="name" class="name" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GK 57 K">
       </div>
       <div class="field">
         <label for="cr">CR</label>
-        <input id="cr" inputmode="decimal" autocomplete="off" placeholder="70,1">
+        <input id="cr" inputmode="decimal" autocomplete="off" placeholder="71,2">
       </div>
       <div class="field">
         <label for="sr">Slope</label>
-        <input id="sr" inputmode="numeric" autocomplete="off" placeholder="125">
+        <input id="sr" inputmode="numeric" autocomplete="off" placeholder="128">
       </div>
       <div class="field">
         <label for="par">Par</label>
@@ -611,10 +611,19 @@ header .toggle { justify-content: center; }
     rememberLast();
   }
 
-  $("new").addEventListener("click", () => {
+  // Empties the inputs (the placeholders show an example tee) and removes the table below.
+  function clearForm() {
     openPicker(false);
     renderTees("");
     ["name", "cr", "sr", "par"].forEach(id => { $(id).value = ""; $(id).removeAttribute("aria-invalid"); });
+    rowsPerCol = 0;
+    $("col1").innerHTML = $("col2").innerHTML = "";
+    $("result").hidden = true;
+    rememberLast();
+  }
+
+  $("new").addEventListener("click", () => {
+    clearForm();
     showMsg("Sláðu inn teig með M eða K aftast, CR, slope og par og ýttu á Reikna.");
     $("name").focus();
   });
@@ -624,7 +633,7 @@ header .toggle { justify-content: center; }
     if (!name) return;
     tees = tees.filter(t => t.name !== name);
     save(TEES, tees);
-    renderTees("");
+    clearForm();
     showMsg(`${name} eytt.`);
   });
 
@@ -812,7 +821,7 @@ header .toggle { justify-content: center; }
   if (document.fonts) document.fonts.ready.then(fit);
 
   // Start with the last values used, or an example tee so the table is filled in.
-  const start = load(STORE, null) || { name: "", cr: "70,1", sr: "125", par: "72" };
+  const start = load(STORE, null) || { name: "", cr: "71,2", sr: "128", par: "72" };
   $("name").value = start.name || "";
   $("cr").value = start.cr; $("sr").value = start.sr; $("par").value = start.par;
   $("part").checked = !!start.part;
