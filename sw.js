@@ -1,5 +1,5 @@
 // Offline cache: everything the app needs is stored on first visit.
-const CACHE = "vf-20261113130843";
+const CACHE = "vf-20261113133728";
 const FILES = [
   "./",
   "index.html",

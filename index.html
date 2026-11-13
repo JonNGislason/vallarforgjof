@@ -45,6 +45,7 @@
   color-scheme: dark;
 }
 
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   background: var(--bg);
@@ -213,12 +214,18 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 form {
   flex: none;
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   gap: 6px;
   align-items: end;
 }
+/* The name (course + tee + M/K) gets its own row above CR / slope / par. */
+form .field:first-child { grid-column: 1 / -1; }
 .field { display: grid; gap: 2px; min-width: 0; }
 form .primary { height: calc(1.3rem + 19px); padding: 0 14px; }
+/* A saved tee is selected: the fields only show its values and Reikna is gone. */
+form.locked { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+form.locked input { background: transparent; border-style: dashed; cursor: default; }
+form.locked input:focus { border-color: var(--line); box-shadow: none; }
 
 .toggle {
   display: flex;
@@ -391,7 +398,7 @@ header .toggle { justify-content: center; }
 
     <form id="form" novalidate>
       <div class="field">
-        <label for="name">Teigur + M/K</label>
+        <label for="name">Völlur + teigur + M/K</label>
         <input id="name" class="name" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GK 57 K">
       </div>
       <div class="field">
@@ -567,6 +574,11 @@ header .toggle { justify-content: center; }
        </li>`).join("");
     disarmTee();
     $("del").disabled = !current;
+    // Locked while a saved tee is selected; "Nýr" (or deleting) opens the fields again.
+    const locked = !!current;
+    $("form").classList.toggle("locked", locked);
+    ["name", "cr", "sr", "par"].forEach(id => { $(id).readOnly = locked; });
+    $("calc").hidden = locked;
   }
 
   // Inline drop-down: the list opens right under the button instead of the phone's own picker.
@@ -607,6 +619,8 @@ header .toggle { justify-content: center; }
     $("cr").value = fmtCR(t.cr);
     $("sr").value = t.sr;
     $("par").value = t.par;
+    clearTimeout(msgTimer);
+    $("msg").hidden = true;
     render();
     rememberLast();
   }
@@ -624,7 +638,7 @@ header .toggle { justify-content: center; }
 
   $("new").addEventListener("click", () => {
     clearForm();
-    showMsg("Sláðu inn teig með M eða K aftast, CR, slope og par og ýttu á Reikna.");
+    showMsg("Sláðu inn völl, teig og M eða K (t.d. GK 57 K), CR, slope og par og ýttu á Reikna.");
     $("name").focus();
   });
 
@@ -769,6 +783,7 @@ header .toggle { justify-content: center; }
 
   // Draws the table from the current inputs. Quiet = don't complain about empty fields.
   function render(quiet) {
+    if (quiet && !current) return false; // no table until a tee is chosen or created
     const v = readInputs(quiet);
     if (!v) return false;
 
@@ -796,32 +811,37 @@ header .toggle { justify-content: center; }
 
   $("form").addEventListener("submit", e => {
     e.preventDefault();
+    if (current) return;
     document.activeElement && document.activeElement.blur();
     $("msg").hidden = true;
     $("name").removeAttribute("aria-invalid");
     const name = cleanName($("name").value);
     $("name").value = name;
+    // A new tee needs all three parts: course, tee and M/K, e.g. "GK 57 K".
+    const parts = name ? name.split(" ") : [];
+    const sexOk = /^[MK]$/.test(parts[parts.length - 1] || "");
+    if (parts.length < 3 || !sexOk) {
+      const missing = !name ? "Sláðu inn völl, teig og M eða K"
+        : !sexOk ? "Endaðu heitið á M (karlar) eða K (konur), með bili á undan"
+        : "Bæði völlur og teigur þurfa að vera í heitinu";
+      showError(`${missing}, t.d. GK 57 K.`, $("name"));
+      return;
+    }
     const v = render(false);
     if (!v) return;
 
-    if (name) {
-      if (!teeSex(name)) {
-        showError("Endaðu nafn teigs á M (karlar) eða K (konur), t.d. GK 47 M. Teigurinn var ekki vistaður.", $("name"));
-      } else {
-        const result = upsertTee(name, v.cr, v.sr, v.par);
-        if (!save(TEES, tees)) showMsg("Ekki tókst að vista í þessum vafra.", true);
-        else if (result) showMsg(`${result}: ${name}`);
-        renderTees(name);
-      }
-    }
+    const result = upsertTee(name, v.cr, v.sr, v.par);
+    if (!save(TEES, tees)) showMsg("Ekki tókst að vista í þessum vafra.", true);
+    else if (result) showMsg(`${result}: ${name}`);
+    renderTees(name);
     rememberLast();
   });
   $("part").addEventListener("change", () => { render(true); rememberLast(); });
   window.addEventListener("resize", fit);
   if (document.fonts) document.fonts.ready.then(fit);
 
-  // Start with the last values used, or an example tee so the table is filled in.
-  const start = load(STORE, null) || { name: "", cr: "71,2", sr: "128", par: "72" };
+  // Start with the last tee used; otherwise empty fields (placeholders show an example) and no table.
+  const start = load(STORE, null) || { name: "", cr: "", sr: "", par: "" };
   $("name").value = start.name || "";
   $("cr").value = start.cr; $("sr").value = start.sr; $("par").value = start.par;
   $("part").checked = !!start.part;
